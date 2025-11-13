@@ -137,6 +137,7 @@ function HomePage({
               <li>
                 Transfer between existing accounts using the Transfer page.
               </li>
+              <li>Have a safe and secure banking in DRC</li>
             </ul>
           </aside>
         </section>
