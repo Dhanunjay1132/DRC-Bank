@@ -1,59 +1,65 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import Header from "./header";
+import DRCLogo from "../assets/components/DRC_Logo.png";
 
-function HomePage({ accounts }) {
-  // Total balance
-  const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
+function HomePage({
+  accounts: propsAccounts = [],
+  activities: propsActivities = [],
+}) {
+  // Use state and initialize from localStorage or props
+  const [accounts, setAccounts] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("accounts"));
+      return Array.isArray(saved) ? saved : propsAccounts;
+    } catch {
+      return propsAccounts;
+    }
+  });
 
-  // Recent activities (last 5 actions)
-  // For simplicity, we consider "Account Created" as activity
-  const recentActivities = accounts
-    .slice(-5)
-    .reverse()
-    .map((acc) => ({
-      type: "Account Created",
-      detail: `Account ${acc.accountNo} for ${acc.name}`,
-      time: "Just now", // you can replace with timestamps if available
-    }));
+  const [activities, setActivities] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("activities"));
+      return Array.isArray(saved) ? saved : propsActivities;
+    } catch {
+      return propsActivities;
+    }
+  });
+
+  // Sync state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("accounts", JSON.stringify(accounts));
+  }, [accounts]);
+
+  useEffect(() => {
+    localStorage.setItem("activities", JSON.stringify(activities));
+  }, [activities]);
+
+  // Total balance (safe)
+  const totalBalance = Array.isArray(accounts)
+    ? accounts.reduce((sum, acc) => sum + (acc.balance || 0), 0)
+    : 0;
+
+  // Sort activities by latest first (safe)
+  const recentActivities = Array.isArray(activities)
+    ? [...activities].sort((a, b) => new Date(b.time) - new Date(a.time))
+    : [];
+
+  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#A28BFF"];
+
+  const pieData = Array.isArray(accounts)
+    ? accounts.map((acc) => ({
+      name: `${acc.name} (${acc.accountNo})`,
+      value: acc.balance || 0,
+    }))
+    : [];
 
   return (
     <>
-      <div className="mx-auto p-8 bg-gray-200 min-h-screen">
-        {/* Header Section */}
-        <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
-          <div>
-            <div className="flex items-center space-x-2 p-3 rounded-lg shadow-md">
-              <img
-                src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAMAAABF0y+mAAAATlBMVEVHcEyZZV/LYz/VYjrfYS/kYCvlXyvkYCznXynmXyrVYjjjYCziYC7ZYjbeYTAiZ5oXaaQWaaYTaqohaaIoaZ4aaKEUa6oVaqgYaaU9aZXuQqIoAAAAGnRSTlMAChoue8/huP/yOp+PTV8eeL7vplo6/9mQiOvsO2IAAAElSURBVHgBjZJFgsUgDEAbNLiUpsz9LzrV78YGyIsnw68HGOcMXjMupFJS8JdMIxqDqO0zYw6ND0EodOwJRmMiLHGDRPEEPerNApYH3AKAlBz6XSZQ3aaccqmjQ3dC2cY8HXwqRLUssrAlptGNRHNOm91Ic2+T1TtlXobcS6W+0qnWvPoI6qAWAFKvtS2fTOPmAaJEJeDMo1NJA3TK1x5dO9BqnYbhgEeNR/dO2Gie1t9WXFQoNwqZ5rR4n6m0lJj3q8cgUfOFtXl3mCvNpUezmOy2ouW+WOxptkI0+iMX5lD/EVGZjjxS602jv7avlpxue+8OCAtkCR7miSocxfrnTVh7y5jVqOwTXIswWitUEZ4hRG0QjXxkx5dHISI/2bM1XPW/nX/XhA7+yBK5AQAAAABJRU5ErkJggg=="
-                alt="Bank Logo"
-                className="w-10 h-10 bg-white rounded"
-                style={{ imageRendering: "crisp-edges" }}
-              />
-              <div>
-                <h1 className="text-xl font-bold text-blue-600">
-                  BlueCloud Bank
-                </h1>
-                <p className="text-sm text-gray-700">
-                  A Secure and Reliable Banking Experience
-                </p>
-              </div>
-            </div>
-          </div>
+      <div className="mx-auto p-8 bg-gradient-to-r from-blue-300 via-indigo-200 to-purple-400 min-h-screen">
+        {/* header */}
+        <Header />
 
-          <div className="flex gap-3">
-            <Link
-              to="/create"
-              className="px-4 py-2 bg-green-500 text-white rounded-lg shadow hover:bg-green-600"
-            >
-              ➕ Create Account
-            </Link>
-            <Link
-              to="/accounts"
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600"
-            >
-              📋 View Accounts
-            </Link>
-          </div>
-        </header>
         {/* Stats Section */}
         <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <div className="bg-cyan-800 text-white p-4 rounded-lg shadow text-center">
@@ -75,28 +81,29 @@ function HomePage({ accounts }) {
             <div className="flex flex-wrap gap-2 mt-3 justify-center">
               <Link
                 to="/deposit"
-                className="px-3 py-1 bg-yellow-400 rounded text-sm"
+                className="px-5 py-1 bg-gradient-to-r from-yellow-300 to-yellow-600 text-white rounded shadow hover:scale-105 transition-transform"
               >
-                Deposit
+                💸Deposit
               </Link>
               <Link
                 to="/withdraw"
-                className="px-3 py-1 bg-red-400 rounded text-sm"
+                className="px-3 py-1  bg-gradient-to-r from-red-300 to-red-600 text-white rounded shadow hover:scale-105 transition-transform"
               >
-                Withdraw
+                💳Withdraw
               </Link>
               <Link
                 to="/transfer"
-                className="px-3 py-1 bg-indigo-400 rounded text-sm"
+                className="px-5 py-1 bg-gradient-to-r from-indigo-300 to-indigo-600 text-white rounded shadow hover:scale-105 transition-transform"
               >
-                Transfer
+                🔄Transfer
               </Link>
             </div>
           </div>
         </section>
+
         {/* Recent Activity */}
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2 bg-white p-4 rounded-lg shadow">
+          <div className="lg:col-span-2 bg-white p-4 rounded-lg shadow-xl max-h-[400px] overflow-y-auto">
             <h2 className="text-lg font-semibold mb-3">Recent Activity</h2>
             <ul className="divide-y">
               {recentActivities.length === 0 ? (
@@ -111,7 +118,9 @@ function HomePage({ accounts }) {
                         <p className="font-medium">{act.type}</p>
                         <p className="text-sm text-gray-600">{act.detail}</p>
                       </div>
-                      <p className="text-xs text-gray-400">{act.time}</p>
+                      <p className="text-xs text-gray-400">
+                        {new Date(act.time).toLocaleString()}
+                      </p>
                     </div>
                   </li>
                 ))
@@ -120,7 +129,7 @@ function HomePage({ accounts }) {
           </div>
 
           {/* Tips */}
-          <aside className="bg-white p-4 rounded-lg shadow">
+          <aside className="bg-white p-4 rounded-lg shadow-xl">
             <h3 className="font-semibold mb-2">Tips</h3>
             <ul className="list-disc list-inside text-sm text-gray-600 space-y-2">
               <li>Create an account using the Create Account button.</li>
@@ -128,20 +137,15 @@ function HomePage({ accounts }) {
               <li>
                 Transfer between existing accounts using the Transfer page.
               </li>
-              <li></li>
             </ul>
           </aside>
         </section>
-        <img
-          src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAMAAABF0y+mAAAATlBMVEVHcEyZZV/LYz/VYjrfYS/kYCvlXyvkYCznXynmXyrVYjjjYCziYC7ZYjbeYTAiZ5oXaaQWaaYTaqohaaIoaZ4aaKEUa6oVaqgYaaU9aZXuQqIoAAAAGnRSTlMAChoue8/huP/yOp+PTV8eeL7vplo6/9mQiOvsO2IAAAElSURBVHgBjZJFgsUgDEAbNLiUpsz9LzrV78YGyIsnw68HGOcMXjMupFJS8JdMIxqDqO0zYw6ND0EodOwJRmMiLHGDRPEEPerNApYH3AKAlBz6XSZQ3aaccqmjQ3dC2cY8HXwqRLUssrAlptGNRHNOm91Ic2+T1TtlXobcS6W+0qnWvPoI6qAWAFKvtS2fTOPmAaJEJeDMo1NJA3TK1x5dO9BqnYbhgEeNR/dO2Gie1t9WXFQoNwqZ5rR4n6m0lJj3q8cgUfOFtXl3mCvNpUezmOy2ouW+WOxptkI0+iMX5lD/EVGZjjxS602jv7avlpxue+8OCAtkCR7miSocxfrnTVh7y5jVqOwTXIswWitUEZ4hRG0QjXxkx5dHISI/2bM1XPW/nX/XhA7+yBK5AQAAAABJRU5ErkJggg=="
-          alt="Bank Logo"
-          className="w-10 h-10 ml-180 mt-10 bg-white rounded"
-          style={{ imageRendering: "crisp-edges" }}
-        />
-        <p className="text-blue-500 ml-149 mt-1 font-bold">
-          {" "}
-          BlueCloud Bank for your finacial Security{" "}
-        </p>{" "}
+
+        <img src={DRCLogo} alt="Bank Logo" className="w-30 h-25 ml-155 mt-5" />
+
+        <p className="text-blue-700 ml-135 font-bold font-serif">
+          DRC Bank for your financial Security
+        </p>
       </div>
     </>
   );
