@@ -4,7 +4,6 @@ import DRCLogo from "../assets/components/DRC_Logo.png";
 
 function Header() {
   return (
-
     <header style={{ marginTop: "-40px" }} className="  flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8 font-serif">
       <div>
         <Link to="/">
